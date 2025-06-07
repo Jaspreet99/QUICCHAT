@@ -11,7 +11,6 @@ It demonstrates handshake validation, duplicate-free messaging with ACK + auto-r
 quicchat/
 ├── server.py            # QUICChat broadcast server
 ├── gui_client.py        # Tk-based client with typing indicator
-├── cli_client.py        # Headless client for tests / scripting
 ├── quic_protocol.py     # Dataclass PDU definitions & codec
 ├── requirements.txt     # aioquic, pytest, etc.
 ├── certs/               # Self-signed TLS cert/key live here
@@ -49,8 +48,6 @@ python server.py --cert certs/cert.pem --key certs/key.pem
 python gui_client.py --host 127.0.0.1 --port 4433 --name Alice
 python gui_client.py --host 127.0.0.1 --port 4433 --name Bob
 
-# Or headless terminal client
-python cli_client.py --host 127.0.0.1 --port 4433 --name Charlie
 ```
 
 ---
