@@ -42,7 +42,7 @@ openssl req -x509 -newkey rsa:2048 -nodes \
 python server.py --cert certs/cert.pem --key certs/key.pem
 ```
 
-### 4 — Launch clients
+### 4 — Launch clients on different terminals
 ```bash
 # GUI clients
 python gui_client.py --host 127.0.0.1 --port 4433 --name Alice
