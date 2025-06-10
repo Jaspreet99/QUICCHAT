@@ -99,7 +99,8 @@ On the reliability side, I assumed duplicate suppression could live in each clie
 Finally, my initial spec left out formal ACKs and retransmits beyond QUIC’s built-in mechanisms. In the implementation, I added a `CHAT_RECEIPT` for every message and built a client-side watchdog that retries un-ACKed lines up to three times, once per second. The revised protocol now spells out these ACK + retry rules so that anyone reading the spec knows exactly how we ensure at-most-once, in-order delivery on top of QUIC. These feedback-driven tweaks—paring down unneeded complexity and hardening weak spots—turned an academic design into a working, maintainable protocol.
 
 ## Extra Credits
-* Uploaded source code on GitHub
+* Uploaded source code on GitHub.
+* Implementation Robustness.
 * Used asynchronous tasks to handle multiple clients by creating a new task for each accepted connection.
-* **Included a learning summary**
+* Included a implementation Feedback.
 
