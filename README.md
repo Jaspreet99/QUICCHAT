@@ -86,4 +86,15 @@ graph TD
 * **Duplicate suppression** – server drops any `seq ≤ last_seq`, returns `CHAT_ERROR 409`  
 * **Per-message ACKs** – every `CHAT_MESSAGE` triggers a `CHAT_RECEIPT`  
 * **Automatic resend** – client retries un-ACKed messages every 1 s (max 3)  
-* **Immediate flush** – both server and client call `transmit()` after each `send_stream_data`  
+* **Immediate flush** – both server and client call `transmit()` after each `send_stream_data`
+
+## Implementation Feedback Reflection
+
+When I actually wrote the QUICChat code instead of just sketching it on paper, I discovered that some of my “clean” design ideas introduced more friction than value. For example, I had planned a compact 9-byte binary header on every message to pack in version, flags, and IDs. In practice, writing and debugging that header packing slowed down development and made it harder to inspect traffic in Wireshark. After switching to JSON-based PDUs, I could iterate faster, read my own logs instantly, and still leave room in the spec for a binary framing layer as a “v2 optimization.”
+
+Similarly, I’d originally envisioned one QUIC stream per chat line to avoid head-of-line blocking. Once I built the client and server, though, I saw that `aioquic` multiplexes all streams over the same UDP socket, and spawning dozens of streams actually throttled throughput. I simplified the spec to use a single bidirectional stream for chat and reserved extra streams only for large payloads (e.g., file transfers). That change cut boilerplate and matched the real behavior of the library.
+
+On the reliability side, I assumed duplicate suppression could live in each client. During testing, however, a buggy CLI client resent the same sequence number twice and sent the server into an endless ACK loop. I moved the `last_seq` check into the server, defined a `CHAT_ERROR 409` response when it saw a replayed or out-of-order message, and updated the spec to make the server authoritative on ordering. I also learned that `send_stream_data()` merely stages frames until you call `transmit()`, so I added an explicit “always call `transmit()`” note in the spec to prevent silent failures.
+
+Finally, my initial spec left out formal ACKs and retransmits beyond QUIC’s built-in mechanisms. In the implementation, I added a `CHAT_RECEIPT` for every message and built a client-side watchdog that retries un-ACKed lines up to three times, once per second. The revised protocol now spells out these ACK + retry rules so that anyone reading the spec knows exactly how we ensure at-most-once, in-order delivery on top of QUIC. These feedback-driven tweaks—paring down unneeded complexity and hardening weak spots—turned an academic design into a working, maintainable protocol.
+
